@@ -1,15 +1,19 @@
 {
-  "name": "appcomponent",
-  "private": true,
+  "name": "@sibley/app-component",
+  "version": "0.1.0",
+  "module": "dist/app-component.min.mjs",
+  "browser": "dist/app-component.min.js",
   "scripts": {
     "build": "rollup -c",
     "watch": "rollup -c -w",
     "serve": "live-server --wait=500",
     "start": "run-p watch serve",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "pages": "rm -rf ghdemo && mkdir -p ghdemo && cp -r demo ghdemo/ && cp index.html ghdemo/ && gh-pages -d ghdemo",
+    "postpublish": "npm run pages"
   },
-  "author": "",
-  "license": "Apache-2.0",
+  "author": "David M Sibley",
+  "license": "MIT",
   "devDependencies": {
     "@babel/core": "^7.1.2",
     "@babel/preset-env": "^7.1.0",

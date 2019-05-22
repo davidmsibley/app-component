@@ -9,13 +9,14 @@ export class AppComponent extends HTMLElement {
 
     this.callbacks = {
       connect: [],
+      attributechange: [],
       disconnect: []
     };
   }
   initTemplate(tpl, context) {
     let node = AppComponent.template(tpl).content.cloneNode(true);
     let tplb = stashe(node);
-    // Create a shadowroot for this element
+
     this.attachShadow({mode: 'open'});
     this.shadowRoot.appendChild(tplb(context));
   }
@@ -31,6 +32,7 @@ export class AppComponent extends HTMLElement {
       }
     }
     this.data[name] = newValue;
+    this.runCallbacks("attributechange");
   }
 
   connectedCallback() {

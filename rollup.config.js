@@ -3,14 +3,14 @@ import html from 'rollup-plugin-html';
 import minify from 'rollup-plugin-minify-es';
 import babel from 'rollup-plugin-babel';
 
-let fileName = 'test-component';
-let objName = 'TestComponent';
+let fileName = 'app-component';
+let objName = 'AppComponent';
 
 
 let plugins = {
   full: [
     html({
-      include: `src/${fileName}.html`,
+      include: `modules/*.html`,
       htmlMinifierOptions: {
         collapseWhitespace: true,
         collapseBooleanAttributes: true,
@@ -20,7 +20,7 @@ let plugins = {
   ],
   min: [
     html({
-      include: `src/${fileName}.html`,
+      include: `modules/*.html`,
       htmlMinifierOptions: {
         collapseWhitespace: true,
         collapseBooleanAttributes: true,
@@ -37,6 +37,46 @@ let plugins = {
 
 
 export default [
+  // Demo build files
+  {
+    input: `modules/index.js`,
+    plugins: plugins.full.concat([babel({
+      exclude: 'node_modules/**',
+      presets: [['@babel/env', { modules: false }]]
+    })]),
+    output: {
+      file: `demo/index.js`,
+      format: 'iife'
+    }
+  },
+  {
+    input: `modules/index.js`,
+    plugins: plugins.min.concat([babel({
+      exclude: 'node_modules/**',
+      presets: [['@babel/env', { modules: false }]]
+    })]),
+    output: {
+      file: `demo/index.min.js`,
+      format: 'iife'
+    }
+  },
+  {
+    input: `modules/index.js`,
+    plugins: plugins.full,
+    output: {
+      file: `demo/index.mjs`,
+      format: 'es'
+    }
+  },
+  {
+    input: `modules/index.js`,
+    plugins: plugins.min,
+    output: {
+      file: `demo/index.min.mjs`,
+      format: 'es'
+    }
+  },
+  // AppComponent build files
   {
     input: `src/${fileName}.js`,
     plugins: plugins.full.concat([babel({

@@ -1,4 +1,4 @@
-import { AppComponent } from '../app-component.js'
+import { AppComponent } from '../src/app-component.js'
 import tpl from './test-component.html'
 
 export class TestComponent extends AppComponent {
