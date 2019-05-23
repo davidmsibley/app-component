@@ -1,6 +1,6 @@
 {
   "name": "@sibley/app-component",
-  "version": "0.2.0",
+  "version": "0.1.0",
   "module": "dist/app-component.min.mjs",
   "browser": "dist/app-component.min.js",
   "scripts": {
@@ -12,7 +12,8 @@
     "pages": "rm -rf ghdemo && mkdir -p ghdemo && cp -r demo ghdemo/ && cp index.html ghdemo/ && gh-pages -d ghdemo",
     "postpublish": "npm run pages",
     "run-publish": "npm publish --access public",
-    "postversion": "git push && git push --tags"
+    "postversion": "run-s postversion:push-tags run-publish",
+    "postversion:push-tags": "git push && git push --tags"
   },
   "author": "David M Sibley",
   "license": "MIT",
