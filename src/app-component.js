@@ -36,7 +36,6 @@ export class AppComponent extends HTMLElement {
   }
 
   connectedCallback() {
-    // Tell the component it has connected
     this.connected = true;
 
     if (this.observedAttributes !== false && typeof this.observedAttributes === "object") {
@@ -93,3 +92,13 @@ AppComponent.template = function template(src) {
   template.innerHTML = src;
   return template;
 };
+
+AppComponent.gatherElements = function gatherElements(doc, attributeName) {
+  let result = {};
+  let elements = doc.querySelectorAll('[' + attributeName + ']');
+  for (let el of elements) {
+    let name = '$' + el.getAttribute(attributeName);
+    result[name] = el;
+  }
+  return result;
+}
