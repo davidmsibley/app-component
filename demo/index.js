@@ -675,6 +675,12 @@
     return AppComponent;
   }(_wrapNativeSuper(HTMLElement));
 
+  AppComponent.init = function init(that, clazz, tpl) {
+    that.observedAttributes = clazz.observedAttributes;
+    that.initTemplate(tpl, that.data);
+    Object.assign(that, AppComponent.gatherElements(that.shadowRoot, 'data-element'));
+  };
+
   AppComponent.template = function template(src) {
     var template = document.createElement('template');
     template.innerHTML = src;
@@ -725,10 +731,7 @@
       _classCallCheck(this, TestComponent);
 
       _this = _possibleConstructorReturn(this, _getPrototypeOf(TestComponent).call(this));
-      _this.observedAttributes = TestComponent.observedAttributes;
-
-      _this.initTemplate(tpl, _this.data);
-
+      AppComponent.init(_assertThisInitialized(_this), TestComponent, tpl);
       return _this;
     }
 

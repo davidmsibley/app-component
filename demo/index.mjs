@@ -289,6 +289,12 @@ class AppComponent extends HTMLElement {
 
 }
 
+AppComponent.init = function init(that, clazz, tpl) {
+  that.observedAttributes = clazz.observedAttributes;
+  that.initTemplate(tpl, that.data);
+  Object.assign(that, AppComponent.gatherElements(that.shadowRoot, 'data-element'));
+};
+
 AppComponent.template = function template(src) {
   const template = (document.createElement('template'));
   template.innerHTML = src;
@@ -310,8 +316,7 @@ var tpl = "<style> </style> <div class=\"hostdiv\"> <div>hello!</div> <div></div
 class TestComponent extends AppComponent {
   constructor() {
     super();
-    this.observedAttributes = TestComponent.observedAttributes;
-    this.initTemplate(tpl, this.data);
+    AppComponent.init(this, TestComponent, tpl);
   }
 
   static get observedAttributes() {
