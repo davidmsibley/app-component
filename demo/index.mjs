@@ -238,7 +238,6 @@ class AppComponent extends HTMLElement {
   }
 
   connectedCallback() {
-    // Tell the component it has connected
     this.connected = true;
 
     if (this.observedAttributes !== false && typeof this.observedAttributes === "object") {
@@ -294,6 +293,16 @@ AppComponent.template = function template(src) {
   const template = (document.createElement('template'));
   template.innerHTML = src;
   return template;
+};
+
+AppComponent.gatherElements = function gatherElements(doc, attributeName) {
+  let result = {};
+  let elements = doc.querySelectorAll('[' + attributeName + ']');
+  for (let el of elements) {
+    let name = '$' + el.getAttribute(attributeName);
+    result[name] = el;
+  }
+  return result;
 };
 
 var tpl = "<style> </style> <div class=\"hostdiv\"> <div>hello!</div> <div></div> <div>{{ replaceme }}! {{ helpme }}</div> </div> ";

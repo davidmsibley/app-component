@@ -580,7 +580,6 @@
     }, {
       key: "connectedCallback",
       value: function connectedCallback() {
-        // Tell the component it has connected
         this.connected = true;
 
         if (this.observedAttributes !== false && _typeof(this.observedAttributes) === "object") {
@@ -680,6 +679,37 @@
     var template = document.createElement('template');
     template.innerHTML = src;
     return template;
+  };
+
+  AppComponent.gatherElements = function gatherElements(doc, attributeName) {
+    var result = {};
+    var elements = doc.querySelectorAll('[' + attributeName + ']');
+    var _iteratorNormalCompletion4 = true;
+    var _didIteratorError4 = false;
+    var _iteratorError4 = undefined;
+
+    try {
+      for (var _iterator4 = elements[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+        var el = _step4.value;
+        var name = '$' + el.getAttribute(attributeName);
+        result[name] = el;
+      }
+    } catch (err) {
+      _didIteratorError4 = true;
+      _iteratorError4 = err;
+    } finally {
+      try {
+        if (!_iteratorNormalCompletion4 && _iterator4["return"] != null) {
+          _iterator4["return"]();
+        }
+      } finally {
+        if (_didIteratorError4) {
+          throw _iteratorError4;
+        }
+      }
+    }
+
+    return result;
   };
 
   var tpl = "<style> </style> <div class=\"hostdiv\"> <div>hello!</div> <div></div> <div>{{ replaceme }}! {{ helpme }}</div> </div> ";
