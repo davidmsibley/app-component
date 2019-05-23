@@ -4,8 +4,7 @@ import tpl from './test-component.html'
 export class TestComponent extends AppComponent {
   constructor() {
     super();
-    this.observedAttributes = TestComponent.observedAttributes;
-    this.initTemplate(tpl, this.data);
+    AppComponent.init(this, TestComponent, tpl);
   }
 
   static get observedAttributes() {

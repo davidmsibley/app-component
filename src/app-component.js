@@ -87,6 +87,12 @@ export class AppComponent extends HTMLElement {
 
 }
 
+AppComponent.init = function init(that, clazz, tpl) {
+  that.observedAttributes = clazz.observedAttributes;
+  that.initTemplate(tpl, that.data);
+  Object.assign(that, AppComponent.gatherElements(that.shadowRoot, 'data-element'));
+};
+
 AppComponent.template = function template(src) {
   const template = (document.createElement('template'));
   template.innerHTML = src;
