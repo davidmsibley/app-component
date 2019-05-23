@@ -1,4 +1,5 @@
 import { stashe } from './stashe-bind.js'
+import { on, off } from './delegated-events.js'
 export class AppComponent extends HTMLElement {
   constructor() {
     super();
@@ -13,12 +14,25 @@ export class AppComponent extends HTMLElement {
       disconnect: []
     };
   }
+
   initTemplate(tpl, context) {
     let node = AppComponent.template(tpl).content.cloneNode(true);
     let tplb = stashe(node);
 
     this.attachShadow({mode: 'open'});
     this.shadowRoot.appendChild(tplb(context));
+
+    const options = {document: this.shadowRoot};
+    this.addListener = (args) => {
+      const fullArgs = args.slice();
+      fullArgs.push(options);
+      on.apply(null, fullArgs);
+    };
+    this.removeListener = (args) => {
+      const fullArgs = args.slice();
+      fullArgs.push(options);
+      off.apply(null, fullArgs);
+    };
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -38,11 +52,19 @@ export class AppComponent extends HTMLElement {
   connectedCallback() {
     this.connected = true;
 
-    if (this.observedAttributes !== false && typeof this.observedAttributes === "object") {
+    if (this.observedAttributes) {
       for (let att of this.observedAttributes) {
         this.data[att] = this.parseAttribute(
           this.getAttribute(att)
         );
+      }
+    }
+
+    if (this.eventListeners) {
+      for (let config of this.eventListeners) {
+        if (config && config.length === 3) {
+          this.addListener(config);
+        }
       }
     }
 
@@ -51,6 +73,14 @@ export class AppComponent extends HTMLElement {
 
   disconnectedCallback() {
     this.connected = false;
+
+    if (this.eventListeners) {
+      for (let config of this.eventListeners) {
+        if (config && config.length === 3) {
+          this.removeListener(config);
+        }
+      }
+    }
 
     this.runCallbacks("disconnect");
   }

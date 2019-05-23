@@ -7,6 +7,15 @@ export class TestComponent extends AppComponent {
     AppComponent.init(this, TestComponent, tpl);
   }
 
+  get eventListeners() {
+    // [name, selector, fn]
+    return [
+      ['click', 'span', function (event) {
+        console.log('hey!')
+      }]
+    ];
+  }
+
   static get observedAttributes() {
     return ['helpme', 'replaceme'];
   }

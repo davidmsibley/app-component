@@ -2,6 +2,7 @@
 import html from 'rollup-plugin-html';
 import minify from 'rollup-plugin-minify-es';
 import babel from 'rollup-plugin-babel';
+import resolve from 'rollup-plugin-node-resolve';
 
 let fileName = 'app-component';
 let objName = 'AppComponent';
@@ -16,7 +17,8 @@ let plugins = {
         collapseBooleanAttributes: true,
         conservativeCollapse: true
       }
-    })
+    }),
+    resolve()
   ],
   min: [
     html({
@@ -27,6 +29,7 @@ let plugins = {
         conservativeCollapse: true
       }
     }),
+    resolve(),
     minify({
       output: {
         wrap_iife: true
