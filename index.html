@@ -12,10 +12,16 @@
     <!-- non-minified test component -->
     <script src="./demo/index.mjs"></script>
     <script nomodule src="./demo/index.js"></script>
-
+    <style>
+      .views {
+        display: grid;
+        grid-template-columns: 33% 33% 33%;
+      }
+    </style>
   </head>
   <body>
     <test-component replaceme="ha" helpme="ohh"></test-component>
+    <in-radio in-name="view" choices='["default","filter","details"]' class="views"></in-radio>
     <test-component replaceme="maybe" helpme="possibly"></test-component>
   </body>
 </html>

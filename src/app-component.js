@@ -1,12 +1,21 @@
-import { stashe } from './stashe-bind.js'
+import { stashe, proxy, trees } from './stashe-bind.js'
 import { on, off } from './delegated-events.js'
 export class AppComponent extends HTMLElement {
   constructor() {
     super();
 
-    this.connected = false;
-    this.observedAttributes = false;
-    this.data = {};
+    this.observedAttributes = {};
+    this.data = new Proxy({}, {
+        set: (function(obj, prop, newval) {
+          obj[prop] = newval;
+          if (this.observedAttributes[prop]) {
+            for (let f of this.observedAttributes[prop]) {
+              f(prop, newval);
+            }
+          }
+          return true;
+        }).bind(this)
+    });
 
     this.callbacks = {
       connect: [],
@@ -36,28 +45,26 @@ export class AppComponent extends HTMLElement {
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
-    if (!this.connected || newValue === oldValue || newValue === null) {
+    if (!this.isConnected || newValue === oldValue || newValue === null) {
       return false;
     }
-
-    for (let att of this.observedAttributes) {
-      if (att === name) {
+    for (const [key] of Object.entries(this.observedAttributes)) {
+      if (key === name) {
         newValue = this.parseAttribute(newValue);
       }
     }
-    this.data[name] = newValue;
+    if (this.data[name] !== newValue) {
+      this.data[name] = newValue;
+    }
     this.runCallbacks("attributechange");
   }
 
   connectedCallback() {
-    this.connected = true;
-
-    if (this.observedAttributes) {
-      for (let att of this.observedAttributes) {
-        this.data[att] = this.parseAttribute(
-          this.getAttribute(att)
-        );
-      }
+    if (!this.isConnected) return;
+    for (const [key] of Object.entries(this.observedAttributes)) {
+      this.data[key] = this.parseAttribute(
+        this.getAttribute(key)
+      );
     }
 
     if (this.eventListeners) {
@@ -72,8 +79,6 @@ export class AppComponent extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.connected = false;
-
     if (this.eventListeners) {
       for (let config of this.eventListeners) {
         if (config && config.length === 3) {
@@ -83,6 +88,18 @@ export class AppComponent extends HTMLElement {
     }
 
     this.runCallbacks("disconnect");
+  }
+
+  serializeAttribute(value) {
+    let result = value;
+    if (!value) return null;
+
+    if (typeof value === 'string') {
+      result = value;
+    } else {
+      result = JSON.stringify(value);
+    }
+    return result;
   }
 
   parseAttribute(str) {
@@ -118,7 +135,9 @@ export class AppComponent extends HTMLElement {
 }
 
 AppComponent.init = function init(that, clazz, tpl) {
-  that.observedAttributes = clazz.observedAttributes;
+  for (let e of clazz.observedAttributes) {
+    that.observedAttributes[e] = [];
+  }
   that.initTemplate(tpl, that.data);
   Object.assign(that, AppComponent.gatherElements(that.shadowRoot, 'data-element'));
 };
