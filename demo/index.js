@@ -1095,7 +1095,7 @@
         set: function (obj, prop, newval) {
           obj[prop] = newval;
 
-          if (this.observedAttributes[prop]) {
+          if (this.isConnected && this.observedAttributes[prop]) {
             var _iteratorNormalCompletion = true;
             var _didIteratorError = false;
             var _iteratorError = undefined;

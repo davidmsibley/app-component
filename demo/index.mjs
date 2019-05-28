@@ -751,7 +751,7 @@ class AppComponent extends HTMLElement {
     this.data = new Proxy({}, {
         set: (function(obj, prop, newval) {
           obj[prop] = newval;
-          if (this.observedAttributes[prop]) {
+          if (this.isConnected && this.observedAttributes[prop]) {
             for (let f of this.observedAttributes[prop]) {
               f(prop, newval);
             }
