@@ -138,6 +138,10 @@
     return _assertThisInitialized(self);
   }
 
+  function _slicedToArray(arr, i) {
+    return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest();
+  }
+
   function _toConsumableArray(arr) {
     return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread();
   }
@@ -150,12 +154,46 @@
     }
   }
 
+  function _arrayWithHoles(arr) {
+    if (Array.isArray(arr)) return arr;
+  }
+
   function _iterableToArray(iter) {
     if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter);
   }
 
+  function _iterableToArrayLimit(arr, i) {
+    var _arr = [];
+    var _n = true;
+    var _d = false;
+    var _e = undefined;
+
+    try {
+      for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+        _arr.push(_s.value);
+
+        if (i && _arr.length === i) break;
+      }
+    } catch (err) {
+      _d = true;
+      _e = err;
+    } finally {
+      try {
+        if (!_n && _i["return"] != null) _i["return"]();
+      } finally {
+        if (_d) throw _e;
+      }
+    }
+
+    return _arr;
+  }
+
   function _nonIterableSpread() {
     throw new TypeError("Invalid attempt to spread non-iterable instance");
+  }
+
+  function _nonIterableRest() {
+    throw new TypeError("Invalid attempt to destructure non-iterable instance");
   }
 
   /*
@@ -1052,9 +1090,40 @@
       _classCallCheck(this, AppComponent);
 
       _this = _possibleConstructorReturn(this, _getPrototypeOf(AppComponent).call(this));
-      _this.connected = false;
-      _this.observedAttributes = false;
-      _this.data = {};
+      _this.observedAttributes = {};
+      _this.data = new Proxy({}, {
+        set: function (obj, prop, newval) {
+          obj[prop] = newval;
+
+          if (this.observedAttributes[prop]) {
+            var _iteratorNormalCompletion = true;
+            var _didIteratorError = false;
+            var _iteratorError = undefined;
+
+            try {
+              for (var _iterator = this.observedAttributes[prop][Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                var f = _step.value;
+                f(prop, newval);
+              }
+            } catch (err) {
+              _didIteratorError = true;
+              _iteratorError = err;
+            } finally {
+              try {
+                if (!_iteratorNormalCompletion && _iterator["return"] != null) {
+                  _iterator["return"]();
+                }
+              } finally {
+                if (_didIteratorError) {
+                  throw _iteratorError;
+                }
+              }
+            }
+          }
+
+          return true;
+        }.bind(_assertThisInitialized(_this))
+      });
       _this.callbacks = {
         connect: [],
         attributechange: [],
@@ -1091,54 +1160,49 @@
     }, {
       key: "attributeChangedCallback",
       value: function attributeChangedCallback(name, oldValue, newValue) {
-        if (!this.connected || newValue === oldValue || newValue === null) {
+        if (!this.isConnected || newValue === oldValue || newValue === null) {
           return false;
         }
 
-        var _iteratorNormalCompletion = true;
-        var _didIteratorError = false;
-        var _iteratorError = undefined;
+        for (var _i = 0, _Object$entries = Object.entries(this.observedAttributes); _i < _Object$entries.length; _i++) {
+          var _Object$entries$_i = _slicedToArray(_Object$entries[_i], 1),
+              key = _Object$entries$_i[0];
 
-        try {
-          for (var _iterator = this.observedAttributes[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-            var att = _step.value;
-
-            if (att === name) {
-              newValue = this.parseAttribute(newValue);
-            }
-          }
-        } catch (err) {
-          _didIteratorError = true;
-          _iteratorError = err;
-        } finally {
-          try {
-            if (!_iteratorNormalCompletion && _iterator["return"] != null) {
-              _iterator["return"]();
-            }
-          } finally {
-            if (_didIteratorError) {
-              throw _iteratorError;
-            }
+          if (key === name) {
+            newValue = this.parseAttribute(newValue);
           }
         }
 
-        this.data[name] = newValue;
+        if (this.data[name] !== newValue) {
+          this.data[name] = newValue;
+        }
+
         this.runCallbacks("attributechange");
       }
     }, {
       key: "connectedCallback",
       value: function connectedCallback() {
-        this.connected = true;
+        if (!this.isConnected) return;
 
-        if (this.observedAttributes) {
+        for (var _i2 = 0, _Object$entries2 = Object.entries(this.observedAttributes); _i2 < _Object$entries2.length; _i2++) {
+          var _Object$entries2$_i = _slicedToArray(_Object$entries2[_i2], 1),
+              key = _Object$entries2$_i[0];
+
+          this.data[key] = this.parseAttribute(this.getAttribute(key));
+        }
+
+        if (this.eventListeners) {
           var _iteratorNormalCompletion2 = true;
           var _didIteratorError2 = false;
           var _iteratorError2 = undefined;
 
           try {
-            for (var _iterator2 = this.observedAttributes[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-              var att = _step2.value;
-              this.data[att] = this.parseAttribute(this.getAttribute(att));
+            for (var _iterator2 = this.eventListeners[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+              var config = _step2.value;
+
+              if (config && config.length === 3) {
+                this.addListener(config);
+              }
             }
           } catch (err) {
             _didIteratorError2 = true;
@@ -1156,6 +1220,11 @@
           }
         }
 
+        this.runCallbacks("connect");
+      }
+    }, {
+      key: "disconnectedCallback",
+      value: function disconnectedCallback() {
         if (this.eventListeners) {
           var _iteratorNormalCompletion3 = true;
           var _didIteratorError3 = false;
@@ -1166,7 +1235,7 @@
               var config = _step3.value;
 
               if (config && config.length === 3) {
-                this.addListener(config);
+                this.removeListener(config);
               }
             }
           } catch (err) {
@@ -1185,43 +1254,21 @@
           }
         }
 
-        this.runCallbacks("connect");
+        this.runCallbacks("disconnect");
       }
     }, {
-      key: "disconnectedCallback",
-      value: function disconnectedCallback() {
-        this.connected = false;
+      key: "serializeAttribute",
+      value: function serializeAttribute(value) {
+        var result = value;
+        if (!value) return null;
 
-        if (this.eventListeners) {
-          var _iteratorNormalCompletion4 = true;
-          var _didIteratorError4 = false;
-          var _iteratorError4 = undefined;
-
-          try {
-            for (var _iterator4 = this.eventListeners[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-              var config = _step4.value;
-
-              if (config && config.length === 3) {
-                this.removeListener(config);
-              }
-            }
-          } catch (err) {
-            _didIteratorError4 = true;
-            _iteratorError4 = err;
-          } finally {
-            try {
-              if (!_iteratorNormalCompletion4 && _iterator4["return"] != null) {
-                _iterator4["return"]();
-              }
-            } finally {
-              if (_didIteratorError4) {
-                throw _iteratorError4;
-              }
-            }
-          }
+        if (typeof value === 'string') {
+          result = value;
+        } else {
+          result = JSON.stringify(value);
         }
 
-        this.runCallbacks("disconnect");
+        return result;
       }
     }, {
       key: "parseAttribute",
@@ -1249,29 +1296,29 @@
       key: "runCallbacks",
       value: function runCallbacks(e) {
         if (this.callbacks[e]) {
-          var _iteratorNormalCompletion5 = true;
-          var _didIteratorError5 = false;
-          var _iteratorError5 = undefined;
+          var _iteratorNormalCompletion4 = true;
+          var _didIteratorError4 = false;
+          var _iteratorError4 = undefined;
 
           try {
-            for (var _iterator5 = this.callbacks[e][Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
-              var callback = _step5.value;
+            for (var _iterator4 = this.callbacks[e][Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+              var callback = _step4.value;
 
               if (typeof callback === "function") {
                 callback();
               }
             }
           } catch (err) {
-            _didIteratorError5 = true;
-            _iteratorError5 = err;
+            _didIteratorError4 = true;
+            _iteratorError4 = err;
           } finally {
             try {
-              if (!_iteratorNormalCompletion5 && _iterator5["return"] != null) {
-                _iterator5["return"]();
+              if (!_iteratorNormalCompletion4 && _iterator4["return"] != null) {
+                _iterator4["return"]();
               }
             } finally {
-              if (_didIteratorError5) {
-                throw _iteratorError5;
+              if (_didIteratorError4) {
+                throw _iteratorError4;
               }
             }
           }
@@ -1283,7 +1330,30 @@
   }(_wrapNativeSuper(HTMLElement));
 
   AppComponent.init = function init(that, clazz, tpl) {
-    that.observedAttributes = clazz.observedAttributes;
+    var _iteratorNormalCompletion5 = true;
+    var _didIteratorError5 = false;
+    var _iteratorError5 = undefined;
+
+    try {
+      for (var _iterator5 = clazz.observedAttributes[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+        var e = _step5.value;
+        that.observedAttributes[e] = [];
+      }
+    } catch (err) {
+      _didIteratorError5 = true;
+      _iteratorError5 = err;
+    } finally {
+      try {
+        if (!_iteratorNormalCompletion5 && _iterator5["return"] != null) {
+          _iterator5["return"]();
+        }
+      } finally {
+        if (_didIteratorError5) {
+          throw _iteratorError5;
+        }
+      }
+    }
+
     that.initTemplate(tpl, that.data);
     Object.assign(that, AppComponent.gatherElements(that.shadowRoot, 'data-element'));
   };
@@ -1360,5 +1430,116 @@
     return TestComponent;
   }(AppComponent);
   window.customElements.define('test-component', TestComponent);
+
+  var tpl$1 = "<template data-element=\"choiceTpl\"> <div class=\"choice\"><input type=\"radio\" name id value><label for></label></div> </template> ";
+
+  var InRadio =
+  /*#__PURE__*/
+  function (_AppComponent) {
+    _inherits(InRadio, _AppComponent);
+
+    function InRadio() {
+      var _this;
+
+      _classCallCheck(this, InRadio);
+
+      _this = _possibleConstructorReturn(this, _getPrototypeOf(InRadio).call(this));
+      AppComponent.init(_assertThisInitialized(_this), InRadio, tpl$1);
+
+      _this.observedAttributes['choices'].push(_this.renderChoices.bind(_assertThisInitialized(_this)));
+
+      _this.observedAttributes['choice'].push(function (prop, val) {
+        this.setAttribute(prop, this.serializeAttribute(val));
+        var option = this.shadowRoot.querySelector('[value=' + this.data.choice + ']');
+
+        if (option) {
+          option.checked = true;
+        }
+      }.bind(_assertThisInitialized(_this)));
+
+      return _this;
+    }
+
+    _createClass(InRadio, [{
+      key: "renderChoices",
+      value: function renderChoices() {
+        var container = this.shadowRoot,
+            template = this.$choiceTpl,
+            name = this.data['in-name'],
+            choices = this.data.choices;
+
+        if (!container || !template || !name || !choices) {
+          return;
+        }
+
+        container.querySelectorAll('.choice').forEach(function (el) {
+          el.remove();
+        }); // https://gist.github.com/gordonbrander/2230317
+
+        var genId = function genId() {
+          return '_' + Math.random().toString(36).substr(2, 9);
+        };
+
+        var checked = false;
+        var _iteratorNormalCompletion = true;
+        var _didIteratorError = false;
+        var _iteratorError = undefined;
+
+        try {
+          for (var _iterator = choices[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+            var choice = _step.value;
+            var result = template.content.cloneNode(true);
+            var id = genId();
+            var $input = result.querySelector('input');
+            var $label = result.querySelector('label');
+            $input.setAttribute('name', name);
+            $input.setAttribute('id', id);
+            $input.setAttribute('value', choice);
+            $label.setAttribute('for', id);
+            $label.textContent = choice;
+
+            if (!checked) {
+              $input.checked = true;
+              checked = true;
+              this.data.choice = choice;
+            }
+
+            container.appendChild(result);
+          }
+        } catch (err) {
+          _didIteratorError = true;
+          _iteratorError = err;
+        } finally {
+          try {
+            if (!_iteratorNormalCompletion && _iterator["return"] != null) {
+              _iterator["return"]();
+            }
+          } finally {
+            if (_didIteratorError) {
+              throw _iteratorError;
+            }
+          }
+        }
+      }
+    }, {
+      key: "eventListeners",
+      get: function get() {
+        var thing = function (event) {
+          var selected = this.shadowRoot.querySelector(':checked');
+          this.data.choice = selected.getAttribute('value');
+        }.bind(this);
+
+        return [['click', 'input', thing]];
+      }
+    }], [{
+      key: "observedAttributes",
+      get: function get() {
+        return ['in-name', 'choices', 'choice'];
+      }
+    }]);
+
+    return InRadio;
+  }(AppComponent);
+  window.customElements.define('in-radio', InRadio);
 
 }());

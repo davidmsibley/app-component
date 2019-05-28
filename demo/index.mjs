@@ -747,9 +747,18 @@ class AppComponent extends HTMLElement {
   constructor() {
     super();
 
-    this.connected = false;
-    this.observedAttributes = false;
-    this.data = {};
+    this.observedAttributes = {};
+    this.data = new Proxy({}, {
+        set: (function(obj, prop, newval) {
+          obj[prop] = newval;
+          if (this.observedAttributes[prop]) {
+            for (let f of this.observedAttributes[prop]) {
+              f(prop, newval);
+            }
+          }
+          return true;
+        }).bind(this)
+    });
 
     this.callbacks = {
       connect: [],
@@ -779,28 +788,26 @@ class AppComponent extends HTMLElement {
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
-    if (!this.connected || newValue === oldValue || newValue === null) {
+    if (!this.isConnected || newValue === oldValue || newValue === null) {
       return false;
     }
-
-    for (let att of this.observedAttributes) {
-      if (att === name) {
+    for (const [key] of Object.entries(this.observedAttributes)) {
+      if (key === name) {
         newValue = this.parseAttribute(newValue);
       }
     }
-    this.data[name] = newValue;
+    if (this.data[name] !== newValue) {
+      this.data[name] = newValue;
+    }
     this.runCallbacks("attributechange");
   }
 
   connectedCallback() {
-    this.connected = true;
-
-    if (this.observedAttributes) {
-      for (let att of this.observedAttributes) {
-        this.data[att] = this.parseAttribute(
-          this.getAttribute(att)
-        );
-      }
+    if (!this.isConnected) return;
+    for (const [key] of Object.entries(this.observedAttributes)) {
+      this.data[key] = this.parseAttribute(
+        this.getAttribute(key)
+      );
     }
 
     if (this.eventListeners) {
@@ -815,8 +822,6 @@ class AppComponent extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.connected = false;
-
     if (this.eventListeners) {
       for (let config of this.eventListeners) {
         if (config && config.length === 3) {
@@ -826,6 +831,18 @@ class AppComponent extends HTMLElement {
     }
 
     this.runCallbacks("disconnect");
+  }
+
+  serializeAttribute(value) {
+    let result = value;
+    if (!value) return null;
+
+    if (typeof value === 'string') {
+      result = value;
+    } else {
+      result = JSON.stringify(value);
+    }
+    return result;
   }
 
   parseAttribute(str) {
@@ -861,7 +878,9 @@ class AppComponent extends HTMLElement {
 }
 
 AppComponent.init = function init(that, clazz, tpl) {
-  that.observedAttributes = clazz.observedAttributes;
+  for (let e of clazz.observedAttributes) {
+    that.observedAttributes[e] = [];
+  }
   that.initTemplate(tpl, that.data);
   Object.assign(that, AppComponent.gatherElements(that.shadowRoot, 'data-element'));
 };
@@ -905,3 +924,72 @@ class TestComponent extends AppComponent {
 }
 
 window.customElements.define('test-component', TestComponent);
+
+var tpl$1 = "<template data-element=\"choiceTpl\"> <div class=\"choice\"><input type=\"radio\" name id value><label for></label></div> </template> ";
+
+class InRadio extends AppComponent {
+  constructor() {
+    super();
+    AppComponent.init(this, InRadio, tpl$1);
+
+    this.observedAttributes['choices'].push(this.renderChoices.bind(this));
+    this.observedAttributes['choice'].push((function(prop, val) {
+      this.setAttribute(prop, this.serializeAttribute(val));
+      const option = this.shadowRoot.querySelector('[value='+this.data.choice+']');
+      if (option) {
+        option.checked = true;
+      }
+    }).bind(this));
+  }
+
+  get eventListeners() {
+    const thing = (function(event) {
+      const selected = this.shadowRoot.querySelector(':checked');
+      this.data.choice = selected.getAttribute('value');
+    }).bind(this);
+    return [['click', 'input', thing]];
+  }
+
+  renderChoices() {
+    const container = this.shadowRoot,
+      template = this.$choiceTpl,
+      name = this.data['in-name'],
+      choices = this.data.choices;
+
+    if (!container || !template || !name || !choices) {
+      return;
+    }
+
+    container.querySelectorAll('.choice').forEach((el) => {el.remove();});
+
+    // https://gist.github.com/gordonbrander/2230317
+    const genId = function() {
+      return '_' + Math.random().toString(36).substr(2, 9);
+    };
+
+    let checked = false;
+    for (let choice of choices) {
+      let result = template.content.cloneNode(true);
+      let id = genId();
+      let $input = result.querySelector('input');
+      let $label = result.querySelector('label');
+      $input.setAttribute('name', name);
+      $input.setAttribute('id', id);
+      $input.setAttribute('value', choice);
+      $label.setAttribute('for', id);
+      $label.textContent=choice;
+      if (!checked) {
+        $input.checked = true;
+        checked = true;
+        this.data.choice = choice;
+      }
+      container.appendChild(result);
+    }
+  }
+
+  static get observedAttributes() {
+    return ['in-name', 'choices', 'choice'];
+  }
+}
+
+window.customElements.define('in-radio', InRadio);
