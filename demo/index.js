@@ -1090,12 +1090,13 @@
       _classCallCheck(this, AppComponent);
 
       _this = _possibleConstructorReturn(this, _getPrototypeOf(AppComponent).call(this));
+      _this.ranConnected = false;
       _this.observedAttributes = {};
       _this.data = new Proxy({}, {
         set: function (obj, prop, newval) {
           obj[prop] = newval;
 
-          if (this.isConnected && this.observedAttributes[prop]) {
+          if (this.ranConnected && this.observedAttributes[prop]) {
             var _iteratorNormalCompletion = true;
             var _didIteratorError = false;
             var _iteratorError = undefined;
@@ -1160,7 +1161,7 @@
     }, {
       key: "attributeChangedCallback",
       value: function attributeChangedCallback(name, oldValue, newValue) {
-        if (!this.isConnected || newValue === oldValue || newValue === null) {
+        if (!this.ranConnected || newValue === oldValue || newValue === null) {
           return false;
         }
 
@@ -1183,6 +1184,7 @@
       key: "connectedCallback",
       value: function connectedCallback() {
         if (!this.isConnected) return;
+        this.ranConnected = true;
 
         for (var _i2 = 0, _Object$entries2 = Object.entries(this.observedAttributes); _i2 < _Object$entries2.length; _i2++) {
           var _Object$entries2$_i = _slicedToArray(_Object$entries2[_i2], 1),
@@ -1225,6 +1227,8 @@
     }, {
       key: "disconnectedCallback",
       value: function disconnectedCallback() {
+        this.ranConnected = false;
+
         if (this.eventListeners) {
           var _iteratorNormalCompletion3 = true;
           var _didIteratorError3 = false;
