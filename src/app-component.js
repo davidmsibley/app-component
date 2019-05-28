@@ -1,4 +1,4 @@
-import { stashe, proxy, trees } from './stashe-bind.js'
+import { stashe } from './stashe-bind.js'
 import { on, off } from './delegated-events.js'
 export class AppComponent extends HTMLElement {
   constructor() {
