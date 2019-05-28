@@ -17,7 +17,7 @@ export class TestComponent extends AppComponent {
   }
 
   static get observedAttributes() {
-    return ['helpme', 'replaceme'];
+    return ['helpme', 'replaceme', 'dereference'];
   }
 }
 

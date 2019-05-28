@@ -31,7 +31,7 @@ function escape(text) {
 }
 
 function resolve(obj, prop) {
-  if (typeof obj !== 'undefined') {
+  if (typeof obj !== 'undefined' && null !== obj) {
     const value = obj[prop];
     if (typeof value === 'function') {
       return value.call();
@@ -126,6 +126,9 @@ function proxyOnce(context) {
     if (!node.proxied) {
       proxy(current, node.name, notifyTree.bind(null, node));
       node.proxied = true;
+    }
+    if (!current[node.name]) {
+      current[node.name] = {};
     }
     current = current[node.name];
     return node;
