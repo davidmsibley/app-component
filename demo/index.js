@@ -229,7 +229,7 @@
   }
 
   function resolve(obj, prop) {
-    if (typeof obj !== 'undefined') {
+    if (typeof obj !== 'undefined' && null !== obj) {
       var value = obj[prop];
 
       if (typeof value === 'function') {
@@ -400,6 +400,10 @@
       if (!node.proxied) {
         proxy(current, node.name, notifyTree.bind(null, node));
         node.proxied = true;
+      }
+
+      if (!current[node.name]) {
+        current[node.name] = {};
       }
 
       current = current[node.name];
@@ -1399,7 +1403,7 @@
     return result;
   };
 
-  var tpl = "<style> </style> <div class=\"hostdiv\"> <div><span>hello!</span></div> <div></div> <div>{{ replaceme }}! {{ helpme }}</div> </div> ";
+  var tpl = "<style> </style> <div class=\"hostdiv\"> <div><span>hello!</span></div> <div></div> <div>{{ replaceme }}! {{ helpme }}</div> <div>{{ dereference.me }}</div> </div> ";
 
   var TestComponent =
   /*#__PURE__*/
@@ -1427,7 +1431,7 @@
     }], [{
       key: "observedAttributes",
       get: function get() {
-        return ['helpme', 'replaceme'];
+        return ['helpme', 'replaceme', 'dereference'];
       }
     }]);
 

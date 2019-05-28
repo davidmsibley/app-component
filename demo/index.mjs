@@ -31,7 +31,7 @@ function escape(text) {
 }
 
 function resolve(obj, prop) {
-  if (typeof obj !== 'undefined') {
+  if (typeof obj !== 'undefined' && null !== obj) {
     const value = obj[prop];
     if (typeof value === 'function') {
       return value.call();
@@ -122,6 +122,9 @@ function proxyOnce(context) {
     if (!node.proxied) {
       proxy(current, node.name, notifyTree.bind(null, node));
       node.proxied = true;
+    }
+    if (!current[node.name]) {
+      current[node.name] = {};
     }
     current = current[node.name];
     return node;
@@ -904,7 +907,7 @@ AppComponent.gatherElements = function gatherElements(doc, attributeName) {
   return result;
 };
 
-var tpl = "<style> </style> <div class=\"hostdiv\"> <div><span>hello!</span></div> <div></div> <div>{{ replaceme }}! {{ helpme }}</div> </div> ";
+var tpl = "<style> </style> <div class=\"hostdiv\"> <div><span>hello!</span></div> <div></div> <div>{{ replaceme }}! {{ helpme }}</div> <div>{{ dereference.me }}</div> </div> ";
 
 class TestComponent extends AppComponent {
   constructor() {
@@ -922,7 +925,7 @@ class TestComponent extends AppComponent {
   }
 
   static get observedAttributes() {
-    return ['helpme', 'replaceme'];
+    return ['helpme', 'replaceme', 'dereference'];
   }
 }
 
