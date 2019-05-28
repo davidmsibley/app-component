@@ -4,11 +4,13 @@ export class AppComponent extends HTMLElement {
   constructor() {
     super();
 
+    this.ranConnected = false;
     this.observedAttributes = {};
     this.data = new Proxy({}, {
         set: (function(obj, prop, newval) {
           obj[prop] = newval;
-          if (this.isConnected && this.observedAttributes[prop]) {
+          if (this.ranConnected
+            && this.observedAttributes[prop]) {
             for (let f of this.observedAttributes[prop]) {
               f(prop, newval);
             }
@@ -45,7 +47,7 @@ export class AppComponent extends HTMLElement {
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
-    if (!this.isConnected || newValue === oldValue || newValue === null) {
+    if (!this.ranConnected || newValue === oldValue || newValue === null) {
       return false;
     }
     for (const [key] of Object.entries(this.observedAttributes)) {
@@ -61,6 +63,7 @@ export class AppComponent extends HTMLElement {
 
   connectedCallback() {
     if (!this.isConnected) return;
+    this.ranConnected = true;
     for (const [key] of Object.entries(this.observedAttributes)) {
       this.data[key] = this.parseAttribute(
         this.getAttribute(key)
@@ -74,11 +77,11 @@ export class AppComponent extends HTMLElement {
         }
       }
     }
-
     this.runCallbacks("connect");
   }
 
   disconnectedCallback() {
+    this.ranConnected = false
     if (this.eventListeners) {
       for (let config of this.eventListeners) {
         if (config && config.length === 3) {
