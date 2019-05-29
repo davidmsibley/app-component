@@ -159,4 +159,6 @@ AppComponent.gatherElements = function gatherElements(doc, attributeName) {
     result[name] = el;
   }
   return result;
-}
+};
+
+AppComponent.stashe = stashe;

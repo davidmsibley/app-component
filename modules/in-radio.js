@@ -43,15 +43,13 @@ export class InRadio extends AppComponent {
 
     let checked = false;
     for (let choice of choices) {
-      let result = template.content.cloneNode(true);
-      let id = genId();
+      let tplb = AppComponent.stashe(template.content.cloneNode(true));
+      let context = {};
+      context.id = genId();
+      context.name = name;
+      context.choice = choice;
+      let result = tplb(context);
       let $input = result.querySelector('input');
-      let $label = result.querySelector('label');
-      $input.setAttribute('name', name);
-      $input.setAttribute('id', id);
-      $input.setAttribute('value', choice);
-      $label.setAttribute('for', id);
-      $label.textContent=choice;
       if (!checked) {
         $input.checked = true;
         checked = true;

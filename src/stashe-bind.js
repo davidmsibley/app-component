@@ -55,8 +55,10 @@ function bindings(node) {
   for (const child of node.childNodes) {
     switch (child.nodeType) {
       case 1:
-        results.push(...bindAttributes(child));
-        results.push(...bindings(child));
+        if (child.nodeName !== 'TEMPLATE') {
+          results.push(...bindAttributes(child));
+          results.push(...bindings(child));
+        }
         break;
       case 3:
         results.push(...bindText(child));
