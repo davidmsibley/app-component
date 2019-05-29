@@ -1,6 +1,6 @@
 {
   "name": "@sibley/app-component",
-  "version": "0.5.4",
+  "version": "0.6.0",
   "module": "dist/app-component.min.mjs",
   "browser": "dist/app-component.min.js",
   "scripts": {
