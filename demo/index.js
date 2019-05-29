@@ -258,8 +258,11 @@
 
         switch (child.nodeType) {
           case 1:
-            results.push.apply(results, _toConsumableArray(bindAttributes(child)));
-            results.push.apply(results, _toConsumableArray(bindings(child)));
+            if (child.nodeName !== 'TEMPLATE') {
+              results.push.apply(results, _toConsumableArray(bindAttributes(child)));
+              results.push.apply(results, _toConsumableArray(bindings(child)));
+            }
+
             break;
 
           case 3:
@@ -1403,6 +1406,8 @@
     return result;
   };
 
+  AppComponent.stashe = stashe;
+
   var tpl = "<style> </style> <div class=\"hostdiv\"> <div><span>hello!</span></div> <div></div> <div>{{ replaceme }}! {{ helpme }}</div> <div>{{ dereference.me }}</div> </div> ";
 
   var TestComponent =
@@ -1439,7 +1444,7 @@
   }(AppComponent);
   window.customElements.define('test-component', TestComponent);
 
-  var tpl$1 = "<template data-element=\"choiceTpl\"> <div class=\"choice\"><input type=\"radio\" name id value><label for></label></div> </template> ";
+  var tpl$1 = "<template data-element=\"choiceTpl\"> <div class=\"choice\"><input type=\"radio\" name=\"{{name}}\" id=\"{{id}}\" value=\"{{choice}}\"><label for=\"{{id}}\">{{choice}}</label></div> </template> ";
 
   var InRadio =
   /*#__PURE__*/
@@ -1496,15 +1501,13 @@
         try {
           for (var _iterator = choices[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
             var choice = _step.value;
-            var result = template.content.cloneNode(true);
-            var id = genId();
+            var tplb = AppComponent.stashe(template.content.cloneNode(true));
+            var context = {};
+            context.id = genId();
+            context.name = name;
+            context.choice = choice;
+            var result = tplb(context);
             var $input = result.querySelector('input');
-            var $label = result.querySelector('label');
-            $input.setAttribute('name', name);
-            $input.setAttribute('id', id);
-            $input.setAttribute('value', choice);
-            $label.setAttribute('for', id);
-            $label.textContent = choice;
 
             if (!checked) {
               $input.checked = true;

@@ -51,8 +51,10 @@ function bindings(node) {
   for (const child of node.childNodes) {
     switch (child.nodeType) {
       case 1:
-        results.push(...bindAttributes(child));
-        results.push(...bindings(child));
+        if (child.nodeName !== 'TEMPLATE') {
+          results.push(...bindAttributes(child));
+          results.push(...bindings(child));
+        }
         break;
       case 3:
         results.push(...bindText(child));
@@ -907,6 +909,8 @@ AppComponent.gatherElements = function gatherElements(doc, attributeName) {
   return result;
 };
 
+AppComponent.stashe = stashe;
+
 var tpl = "<style> </style> <div class=\"hostdiv\"> <div><span>hello!</span></div> <div></div> <div>{{ replaceme }}! {{ helpme }}</div> <div>{{ dereference.me }}</div> </div> ";
 
 class TestComponent extends AppComponent {
@@ -931,7 +935,7 @@ class TestComponent extends AppComponent {
 
 window.customElements.define('test-component', TestComponent);
 
-var tpl$1 = "<template data-element=\"choiceTpl\"> <div class=\"choice\"><input type=\"radio\" name id value><label for></label></div> </template> ";
+var tpl$1 = "<template data-element=\"choiceTpl\"> <div class=\"choice\"><input type=\"radio\" name=\"{{name}}\" id=\"{{id}}\" value=\"{{choice}}\"><label for=\"{{id}}\">{{choice}}</label></div> </template> ";
 
 class InRadio extends AppComponent {
   constructor() {
@@ -975,15 +979,13 @@ class InRadio extends AppComponent {
 
     let checked = false;
     for (let choice of choices) {
-      let result = template.content.cloneNode(true);
-      let id = genId();
+      let tplb = AppComponent.stashe(template.content.cloneNode(true));
+      let context = {};
+      context.id = genId();
+      context.name = name;
+      context.choice = choice;
+      let result = tplb(context);
       let $input = result.querySelector('input');
-      let $label = result.querySelector('label');
-      $input.setAttribute('name', name);
-      $input.setAttribute('id', id);
-      $input.setAttribute('value', choice);
-      $label.setAttribute('for', id);
-      $label.textContent=choice;
       if (!checked) {
         $input.checked = true;
         checked = true;
